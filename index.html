@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>TeEmpomoDoro</title>
+		<style type="text/css">
+			html{
+				height: 100%;
+			}
+			body {
+				min-height: 100%;
+			}
+			#pagina{
+				width:100%;
+				height:400px;
+				position: relative;
+				overflow: hidden;
+			}
+			.trabajo{
+				background:red;
+			}
+			.recreo{
+				background:green;
+			}
+			#clock{
+				font-size:132px;
+				text-align:center;
+				font-family:"droid sans", sans-serif;
+			}
+			#minutes{
+				font-weight: bold;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="formIniciar">
+			<input id="iniciar" type="button" value="Iniciar"/>
+		</div>
+		<div id="pagina">
+			<div id="clock">
+				<span id="minutes"></span>
+				<span>:</span>
+				<span id="seconds"></span>
+			</div>
+		</div>
+		<audio id="alarm" preload="none" src="http://www.soundsnap.com/audio/play/121241"></audio>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+		<script>
+			$(document).ready(function(){
+				var seconds;
+				var isModerator = false;
+				var currentState = "undefined";
+				$("#pagina").hide();
+				var socket = io.connect('http://10.0.0.11');
+				$("#iniciar").click(function(){
+					isModerator = true;
+					currentState = "trabajo";
+					showPageTrabajo();
+					socket.emit('updateStatus', {state:"trabajo", seconds:25*60});
+					setInterval(function(){
+						var state = currentState;
+						seconds--;
+						if(seconds == 0){
+							 if(currentState == "trabajo"){
+								state = "recreo";
+								seconds = 5*60;
+							}else{
+								state = "trabajo";
+								seconds = 25*60;	
+							}
+						}
+						socket.emit('updateStatus', {state:state, seconds:seconds});
+					}, 1000);
+				});
+				socket.on('updateStatus', function(data){
+					seconds = data.seconds;
+					updateClock(seconds);
+					var oldState = currentState;
+					currentState = data.state;
+					if(oldState != currentState){
+						if(currentState == "trabajo")
+							showPageTrabajo();
+						else
+							showPageRecreo();
+					}
+				});
+				function updateClock(remainingSeconds){
+					var remMinutes = remainingSeconds / 60;
+					var remSeconds = remainingSeconds % 60;
+					var mins = parseInt(remMinutes);
+					var secs = parseInt(remSeconds);
+					if(remSeconds < 10){
+						secs = "0" + secs;
+					}
+					$("#minutes").text(mins);
+					$("#seconds").text(secs);
+					if(remainingSeconds == 1){
+						$("#alarm")[0].play();
+						setTimeout(function(){
+							$("#alarm")[0].pause();
+						},5000);
+					}
+					$("title").text(currentState + " - " + mins + ":" + secs);
+				};
+				function showPageTrabajo(){
+					currentState = "trabajo";
+					$("#formIniciar").hide();
+                                        $("#pagina").show();
+                                        $("#pagina").addClass("trabajo");
+                                        $("#pagina").removeClass("recreo");
+				};
+				function showPageRecreo(){
+					$("#formIniciar").hide();
+                                        $("#pagina").show();
+					currentState = "recreo";
+                                        $("#pagina").addClass("recreo");
+                                        $("#pagina").removeClass("trabajo");
+				};
+			});
+</script>
+	</body>
+</html>

@@ -32,9 +32,6 @@
 		</style>
 	</head>
 	<body>
-		<div id="formIniciar">
-			<input id="iniciar" type="button" value="Iniciar"/>
-		</div>
 		<div id="pagina">
 			<div id="clock">
 				<span id="minutes"></span>
@@ -47,34 +44,12 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 		<script>
 			$(document).ready(function(){
-				var seconds;
-				var isModerator = false;
 				var currentState = "undefined";
-				$("#pagina").hide();
 				var socket = io.connect('http://10.0.0.11');
-				$("#iniciar").click(function(){
-					isModerator = true;
-					currentState = "trabajo";
-					showPageTrabajo();
-					socket.emit('updateStatus', {state:"trabajo", seconds:25*60});
-					setInterval(function(){
-						var state = currentState;
-						seconds--;
-						if(seconds == 0){
-							 if(currentState == "trabajo"){
-								state = "recreo";
-								seconds = 5*60;
-							}else{
-								state = "trabajo";
-								seconds = 25*60;	
-							}
-						}
-						socket.emit('updateStatus', {state:state, seconds:seconds});
-					}, 1000);
-				});
 				socket.on('updateStatus', function(data){
-					seconds = data.seconds;
-					updateClock(seconds);
+					var minutes = data.minutes;					
+					var seconds = data.seconds;
+					updateClock(minutes, seconds);
 					var oldState = currentState;
 					currentState = data.state;
 					if(oldState != currentState){
@@ -84,35 +59,22 @@
 							showPageRecreo();
 					}
 				});
-				function updateClock(remainingSeconds){
-					var remMinutes = remainingSeconds / 60;
-					var remSeconds = remainingSeconds % 60;
-					var mins = parseInt(remMinutes);
-					var secs = parseInt(remSeconds);
-					if(remSeconds < 10){
-						secs = "0" + secs;
-					}
-					$("#minutes").text(mins);
-					$("#seconds").text(secs);
-					if(remainingSeconds == 1){
+				function updateClock(minutes, seconds){
+					$("#minutes").text(minutes);
+					$("#seconds").text(seconds);
+					if(minutes == 0 && seconds == 1){
 						$("#alarm")[0].play();
 						setTimeout(function(){
 							$("#alarm")[0].pause();
 						},5000);
 					}
-					$("title").text(currentState + " - " + mins + ":" + secs);
+					$("title").text(currentState + " - " + minutes + ":" + seconds);
 				};
 				function showPageTrabajo(){
-					currentState = "trabajo";
-					$("#formIniciar").hide();
-                                        $("#pagina").show();
                                         $("#pagina").addClass("trabajo");
                                         $("#pagina").removeClass("recreo");
 				};
 				function showPageRecreo(){
-					$("#formIniciar").hide();
-                                        $("#pagina").show();
-					currentState = "recreo";
                                         $("#pagina").addClass("recreo");
                                         $("#pagina").removeClass("trabajo");
 				};

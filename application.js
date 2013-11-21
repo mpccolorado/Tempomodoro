@@ -3,6 +3,43 @@ var app = require('http').createServer(handler),
     fs = require('fs');
 app.listen(1337);
 
+	var seconds = 25*60;
+	var currentState = "trabajo";
+	var periodsOfWorkCounter = 1;
+	function initTempomodoro(){
+		updateClock(seconds);
+		setInterval(function(){
+			var state = currentState;
+			seconds--;
+			if(seconds == 0){
+				 if(currentState == "trabajo"){
+					state = "recreo";
+					if(periodsOfWorkCounter % 4 == 0){
+						seconds = 5*60;
+					}
+					else{
+						seconds = 20*60;
+					}
+				}else{
+					periodsOfWorkCounter++;
+					state = "trabajo";
+					seconds = 25*60;	
+				}
+			}
+			updateClock(seconds);
+		}, 1000);
+	};
+	function updateClock(remainingSeconds){
+		var remMinutes = remainingSeconds / 60;
+		var remSeconds = remainingSeconds % 60;
+		var mins = parseInt(remMinutes);
+		var secs = parseInt(remSeconds);
+		if(remSeconds < 10){
+			secs = "0" + secs;
+		}
+		io.sockets.emit('updateStatus', {state:currentState, minutes:mins, seconds:secs});
+	};
+	initTempomodoro();
 function handler (req, res) {
   fs.readFile('./index.html',
   function (err, data) {

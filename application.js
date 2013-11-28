@@ -13,16 +13,16 @@ app.listen(1337);
 			seconds--;
 			if(seconds == 0){
 				 if(currentState == "trabajo"){
-					state = "recreo";
+					currentState = "recreo";
 					if(periodsOfWorkCounter % 4 == 0){
-						seconds = 5*60;
+						seconds = 20*60;
 					}
 					else{
-						seconds = 20*60;
+						seconds = 5*60;
 					}
 				}else{
 					periodsOfWorkCounter++;
-					state = "trabajo";
+					currentState = "trabajo";
 					seconds = 25*60;	
 				}
 			}
